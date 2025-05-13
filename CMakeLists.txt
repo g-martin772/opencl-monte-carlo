@@ -7,4 +7,4 @@ find_package(OpenCL REQUIRED)
 
 add_executable(opencl_monte_carlo main.cpp)
 
-target_link_libraries(OpenCL::OpenCL)
+target_link_libraries(opencl_monte_carlo OpenCL::OpenCL)
