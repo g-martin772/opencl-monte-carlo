@@ -14,6 +14,8 @@
 #define DEVICE CL_DEVICE_TYPE_DEFAULT
 #endif
 
+#define N_SIMULATIONS 1000
+
 std::string load_program(std::string input) {
     std::ifstream stream(input.c_str());
     if (!stream.is_open()) {
@@ -25,23 +27,43 @@ std::string load_program(std::string input) {
 }
 
 int main() {
+    // Quote *eurusd = new Quote("AAPL");
+    // eurusd->getHistoricalSpots("2018-01-01", "2019-01-10", "1d");
+    // eurusd->printSpots();
 
-    Quote *eurusd = new Quote("AAPL");
-    eurusd->getHistoricalSpots("2018-01-01", "2019-01-10", "1d");
-    eurusd->printSpots();
+    auto currentPrice = 211.26f;
+    auto expectedReturns = 0.2f;
+    auto volatility = 0.3f;
+    auto tradingDays = 1.0f / 252.0f;
+
+    std::vector<float> results(N_SIMULATIONS);
+
+    cl::Platform platform = cl::Platform::getDefault();
+    cl::Device device = cl::Device::getDefault();
 
     cl::Context context(DEVICE);
 
-    // load in kernel source, creating a program object for the context
     cl::Program program(context, load_program("../kernel.cl"), true);
 
-    // get the command queue
-    cl::CommandQueue queue(context);
+    cl::Buffer output_buffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * N_SIMULATIONS);
 
-    // create the kernel functor
-    auto vadd =
-        cl::KernelFunctor<cl::Buffer, cl::Buffer, cl::Buffer, int>(program, "vadd");
+    cl::Kernel kernel(program, "monte_carlo_sim");
+    kernel.setArg(0, currentPrice);
+    kernel.setArg(1, expectedReturns);
+    kernel.setArg(2, volatility);
+    kernel.setArg(3, tradingDays);
+    kernel.setArg(4, 360);
+    kernel.setArg(5, output_buffer);
 
+    cl::CommandQueue queue(context, device);
+    queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(N_SIMULATIONS));
+    queue.enqueueReadBuffer(output_buffer, CL_TRUE, 0, sizeof(float) * N_SIMULATIONS, results.data());
+
+    float mean = 0;
+    for (auto r: results) mean += r;
+    mean /= N_SIMULATIONS;
+
+    std::cout << "Expected final price: " << mean << std::endl;
 
     return 0;
 }
