@@ -8,6 +8,8 @@
 #include <iostream>
 #include <vector>
 
+#include "dependencies/yahoo-finance/src/quote.hpp"
+
 #ifndef DEVICE
 #define DEVICE CL_DEVICE_TYPE_DEFAULT
 #endif
@@ -23,6 +25,10 @@ std::string load_program(std::string input) {
 }
 
 int main() {
+
+    Quote *eurusd = new Quote("AAPL");
+    eurusd->getHistoricalSpots("2018-01-01", "2019-01-10", "1d");
+    eurusd->printSpots();
 
     cl::Context context(DEVICE);
 

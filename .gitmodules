@@ -1,0 +1,3 @@
+[submodule "dependencies/yahoo-finance"]
+	path = dependencies/yahoo-finance
+	url = https://github.com/foxadb/yahoo-finance.git
