@@ -8,13 +8,13 @@
 #include <iostream>
 #include <vector>
 
-#include "dependencies/yahoo-finance/src/quote.hpp"
+// #include "dependencies/yahoo-finance/src/quote.hpp"
 
 #ifndef DEVICE
 #define DEVICE CL_DEVICE_TYPE_DEFAULT
 #endif
 
-#define N_SIMULATIONS 1000
+#define N_SIMULATIONS 10000000
 
 std::string load_program(std::string input) {
     std::ifstream stream(input.c_str());
@@ -52,7 +52,7 @@ int main() {
     kernel.setArg(1, expectedReturns);
     kernel.setArg(2, volatility);
     kernel.setArg(3, tradingDays);
-    kernel.setArg(4, 360);
+    kernel.setArg(4, 2520);
     kernel.setArg(5, output_buffer);
 
     cl::CommandQueue queue(context, device);
