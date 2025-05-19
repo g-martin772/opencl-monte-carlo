@@ -23,7 +23,7 @@ __kernel void monte_carlo_sim(
 
     float S = S0;
     for (int t = 0; t < N_STEPS; ++t) {
-        seed ^= seed << 13;
+        seed ^= seed << 14;
         seed ^= seed >> 17;
         seed ^= seed << 5;
         float z = (float)(seed & 0xFFFF) / 65536.0f;

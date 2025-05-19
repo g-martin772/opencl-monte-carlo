@@ -1,6 +1,6 @@
 import yfinance as yf
 import numpy as np
-import json
+import subprocess
 
 def get_params(ticker, years=5):
     """
@@ -34,14 +34,22 @@ def get_params(ticker, years=5):
     print(f"✔️  {ticker}: μ = {result['expectedReturns']}  σ = {result['volatility']}  S₀ = {result['currentPrice']}")
     return result
 
-# Example: simulate for these tickers
-tickers = {
-    "MSFT": 5,
-    "META": 10,
-    "PLTR": 3,
-    "TSLA": 5,
-    "GME": 5
-}
+def main():
+    print("Welcome to monte carlo")
+    stock = input("Select a stock: ")
+    years = int(input("Select number of years: "))
 
-for ticker, years in tickers.items():
-    result = get_params(ticker, years)
+    result = get_params(stock, years)
+
+    print("Starting Monte Carlo simulation...")
+    subprocess.call([
+        "./cmake-build-debug/opencl_monte_carlo",
+        str(result["currentPrice"]),
+        str(result["expectedReturns"]),
+        str(result["volatility"]),
+        str(1 / 252),
+        str(int(years) * 252)
+    ])
+
+if __name__ == "__main__":
+    main()

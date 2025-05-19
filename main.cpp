@@ -8,13 +8,13 @@
 #include <iostream>
 #include <vector>
 
-// #include "dependencies/yahoo-finance/src/quote.hpp"
+#include "dependencies/yahoo-finance/src/quote.hpp"
 
 #ifndef DEVICE
 #define DEVICE CL_DEVICE_TYPE_DEFAULT
 #endif
 
-#define N_SIMULATIONS 10000000
+#define N_SIMULATIONS 1000
 
 std::string load_program(std::string input) {
     std::ifstream stream(input.c_str());
@@ -26,15 +26,19 @@ std::string load_program(std::string input) {
                        (std::istreambuf_iterator<char>()));
 }
 
-int main() {
-    // Quote *eurusd = new Quote("AAPL");
-    // eurusd->getHistoricalSpots("2018-01-01", "2019-01-10", "1d");
-    // eurusd->printSpots();
+int main(int argc, char** argv) {
 
-    auto currentPrice = 211.26f;
-    auto expectedReturns = 0.2f;
-    auto volatility = 0.3f;
-    auto tradingDays = 1.0f / 252.0f;
+    if (argc < 6) {
+        std::cerr << "Usage: " << argv[0]
+                  << " <currentPrice> <expectedReturns> <volatility> <tradingDays> <days>\n";
+        return 1;
+    }
+
+    float currentPrice = std::atof(argv[1]);
+    float expectedReturns = std::atof(argv[2]);
+    float volatility = std::atof(argv[3]);
+    float tradingDays = std::atof(argv[4]);
+    int days = std::atoi(argv[5]);
 
     std::vector<float> results(N_SIMULATIONS);
 
@@ -43,7 +47,7 @@ int main() {
 
     cl::Context context(DEVICE);
 
-    cl::Program program(context, load_program("../kernel.cl"), true);
+    cl::Program program(context, load_program("kernel.cl"), true);
 
     cl::Buffer output_buffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * N_SIMULATIONS);
 
@@ -52,7 +56,7 @@ int main() {
     kernel.setArg(1, expectedReturns);
     kernel.setArg(2, volatility);
     kernel.setArg(3, tradingDays);
-    kernel.setArg(4, 2520);
+    kernel.setArg(4, days);
     kernel.setArg(5, output_buffer);
 
     cl::CommandQueue queue(context, device);
@@ -64,6 +68,7 @@ int main() {
     mean /= N_SIMULATIONS;
 
     std::cout << "Expected final price: " << mean << std::endl;
+    std::cout << "Total return: " << mean/currentPrice*100 << "%" << std::endl;
 
     return 0;
 }
