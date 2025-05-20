@@ -27,9 +27,12 @@ __kernel void monte_carlo_sim(
         seed ^= seed >> 17;
         seed ^= seed << 5;
         float z = (float)(seed & 0xFFFF) / 65536.0f;
+
         z = 2.0f * z - 1.0f;
 
         S *= exp((mu - 0.5f * sigma * sigma) * dt + sigma * sqrt(dt) * z);
+
+        results[gid * N_STEPS + t] = S;
     }
 
     results[gid] = S;
