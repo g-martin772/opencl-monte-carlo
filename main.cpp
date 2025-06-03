@@ -55,6 +55,8 @@ int main(int argc, char **argv) {
 
     cl::Platform platform = cl::Platform::getDefault();
     cl::Device device = cl::Device::getDefault();
+    std::string deviceName = device.getInfo<CL_DEVICE_NAME>();
+    std::cout << "Standardgeraet: " << deviceName << "\n";
 
     cl::Context context(DEVICE);
 
