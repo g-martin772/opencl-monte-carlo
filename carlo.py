@@ -59,8 +59,8 @@ def run_cpu_sim(result, years, paths=1000):
     N = int(T / dt)
     t = np.linspace(0, T, N)
 
-    start_time = time.time()
     simulations = np.zeros((paths, N))
+    start_time = time.time()
     for i in range(paths):
         W = np.random.standard_normal(N)
         W = np.cumsum(W) * np.sqrt(dt)
