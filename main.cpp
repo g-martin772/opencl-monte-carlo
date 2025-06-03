@@ -11,7 +11,7 @@
 #define DEVICE CL_DEVICE_TYPE_DEFAULT
 #endif
 
-#define N_SIMULATIONS 1000
+#define N_SIMULATIONS 10000
 
 std::string load_program(std::string input) {
     std::ifstream stream(input.c_str());
@@ -55,8 +55,6 @@ int main(int argc, char **argv) {
 
     cl::Platform platform = cl::Platform::getDefault();
     cl::Device device = cl::Device::getDefault();
-    std::string deviceName = device.getInfo<CL_DEVICE_NAME>();
-    std::cout << "Standardgeraet: " << deviceName << "\n";
 
     cl::Context context(DEVICE);
 

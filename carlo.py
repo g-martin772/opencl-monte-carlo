@@ -48,7 +48,8 @@ def run_gpu_sim(result, years):
     df = pd.read_csv("price.csv", sep=";", header=None)
     return df
 
-def run_cpu_sim(result, years, paths=1000):
+def run_cpu_sim(result, years):
+    paths = 10000
     print("Starting CPU-sim...")
     S0 = result["currentPrice"]
     mu = result["expectedReturns"]
@@ -74,7 +75,7 @@ def run_cpu_sim(result, years, paths=1000):
     return df
 
 def plot_simulation(df, result, years):
-    mean_per_day = df.mean(axis=0)
+    #mean_per_day = df.mean(axis=0)
 
     plt.figure(figsize=(16, 8))
 
