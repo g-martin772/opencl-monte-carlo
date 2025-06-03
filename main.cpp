@@ -1,23 +1,11 @@
 #include <iostream>
-
 #include <CL/cl.hpp>
-
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <vector>
-
-#include "dependencies/yahoo-finance/src/quote.hpp"
-
-#include <TCanvas.h>
-#include <TH1F.h>
-#include <TRandom3.h>
-#include <TGraph.h>
-#include <TApplication.h>
-#include <TCanvas.h>
-#include <TGraph.h>
-#include <TROOT.h>
+#include <windows.h>
 
 #ifndef DEVICE
 #define DEVICE CL_DEVICE_TYPE_DEFAULT
@@ -33,6 +21,21 @@ std::string load_program(std::string input) {
     }
     return std::string(std::istreambuf_iterator<char>(stream),
                        (std::istreambuf_iterator<char>()));
+}
+
+double getTimeInSeconds() {
+    static LARGE_INTEGER frequency;
+    static BOOL initialized = FALSE;
+
+    if (!initialized) {
+        QueryPerformanceFrequency(&frequency);
+        initialized = TRUE;
+    }
+
+    LARGE_INTEGER counter;
+    QueryPerformanceCounter(&counter);
+
+    return (double)counter.QuadPart / (double)frequency.QuadPart;
 }
 
 int main(int argc, char **argv) {
@@ -68,55 +71,21 @@ int main(int argc, char **argv) {
     kernel.setArg(5, output_buffer);
 
     cl::CommandQueue queue(context, device);
+    double start_gpu = getTimeInSeconds();
     queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(N_SIMULATIONS));
+    queue.finish();
+    double end_gpu = getTimeInSeconds();
     queue.enqueueReadBuffer(output_buffer, CL_TRUE, 0, sizeof(float) * N_SIMULATIONS * days, results.data());
+    std::cout << "GPU execution time: " << (end_gpu - start_gpu) * 1000 << " ms\n";
 
-    float mean = 0;
-    for (auto r: results) mean += r;
-    mean /= N_SIMULATIONS * days;
-
-    std::cout << "Expected final price: " << mean << std::endl;
-    std::cout << "Total return: " << mean / currentPrice * 100 << "%" << std::endl;
-
-    std::vector<float> means(days, 0), mins(days, std::numeric_limits<float>::max()), maxs(days, 0);
-    for (int t = 0; t < days; ++t) {
-        for (int i = 0; i < N_SIMULATIONS; ++i) {
-            float val = results[i * days + t];
-            means[t] += val;
-            mins[t] = std::min(mins[t], val);
-            maxs[t] = std::max(maxs[t], val);
+    std::ofstream file ("price.csv");
+    for (int i = 0; i < N_SIMULATIONS; ++i) {
+        for (int j = 0; j < days; ++j) {
+            file << results[i * days + j] << ";";
         }
-        means[t] /= N_SIMULATIONS;
+        file << "\n";
     }
-
-    std::vector<float> x_vals(days);
-    for (int i = 0; i < days; ++i)
-        x_vals[i] = i;
-
-    TApplication app("app", &argc, argv);
-    gROOT->SetBatch(kTRUE);
-
-    auto *canvas = new TCanvas("canvas", "Monte Carlo Simulation", 800, 600);
-    auto meanGraph = new TGraph(days, x_vals.data(), means.data());
-    auto minGraph = new TGraph(days, x_vals.data(), mins.data());
-    auto maxGraph = new TGraph(days, x_vals.data(), maxs.data());
-
-    meanGraph->SetLineColor(kBlue);
-    minGraph->SetLineColor(kBlack);
-    maxGraph->SetLineColor(kRed);
-
-    meanGraph->SetTitle("Mean;Day;Price");
-    meanGraph->Draw("AL");
-    minGraph->Draw("L SAME");
-    maxGraph->Draw("L SAME");
-
-    canvas->BuildLegend();
-    canvas->SaveAs("monte_carlo_paths.png");
-
-    delete canvas;
-    delete meanGraph;
-    delete minGraph;
-    delete maxGraph;
+    file.close();
 
     return 0;
 }
